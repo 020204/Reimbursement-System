@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.reimbursement.mapper.ApprovalRecordMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.example.reimbursement.entity.ApprovalRecord">
+        <id column="id" property="id"/>
+        <result column="form_id" property="formId"/>
+        <result column="approver_id" property="approverId"/>
+        <result column="approval_level" property="approvalLevel"/>
+        <result column="result" property="result"/>
+        <result column="comment" property="comment"/>
+        <result column="approval_time" property="approvalTime"/>
+        <result column="approver_name" property="approverName"/>
+    </resultMap>
+
+    <!-- 基本字段 -->
+    <sql id="Base_Column_List">
+        ar.id, ar.form_id, ar.approver_id, ar.approval_level, ar.result, 
+        ar.comment, ar.approval_time, e.name as approver_name
+    </sql>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM approval_record ar
+        LEFT JOIN employee e ON ar.approver_id = e.id
+        WHERE ar.id = #{id}
+    </select>
+
+    <!-- 根据报销单ID查询审批记录列表 -->
+    <select id="selectByFormId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM approval_record ar
+        LEFT JOIN employee e ON ar.approver_id = e.id
+        WHERE ar.form_id = #{formId}
+        ORDER BY ar.approval_level ASC, ar.approval_time ASC
+    </select>
+
+    <!-- 插入 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO approval_record 
+        (form_id, approver_id, approval_level, result, comment)
+        VALUES 
+        (#{formId}, #{approverId}, #{approvalLevel}, #{result}, #{comment})
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update">
+        UPDATE approval_record
+        <set>
+            <if test="result != null and result != ''">result = #{result},</if>
+            <if test="comment != null">comment = #{comment},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="deleteById">
+        DELETE FROM approval_record WHERE id = #{id}
+    </delete>
+
+</mapper>

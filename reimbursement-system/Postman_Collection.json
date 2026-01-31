@@ -1,0 +1,175 @@
+{
+  "info": {
+    "name": "报销管理系统API",
+    "description": "报销管理系统的完整API测试集合",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "员工管理",
+      "item": [
+        {
+          "name": "登录",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/employee/login",
+              "host": ["{{base_url}}"],
+              "path": ["employee", "login"]
+            }
+          }
+        },
+        {
+          "name": "获取当前用户信息",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/employee/current",
+              "host": ["{{base_url}}"],
+              "path": ["employee", "current"]
+            }
+          }
+        },
+        {
+          "name": "查询所有员工",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/employee/list",
+              "host": ["{{base_url}}"],
+              "path": ["employee", "list"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "报销管理",
+      "item": [
+        {
+          "name": "创建报销单",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": 4,\n  \"title\": \"上海出差报销\",\n  \"type\": \"TRAVEL\",\n  \"description\": \"上海客户拜访差旅费\",\n  \"details\": [\n    {\n      \"itemName\": \"高铁票\",\n      \"amount\": 800.00,\n      \"occurrenceDate\": \"2024-01-20\",\n      \"description\": \"上海往返高铁票\"\n    },\n    {\n      \"itemName\": \"酒店\",\n      \"amount\": 600.00,\n      \"occurrenceDate\": \"2024-01-20\",\n      \"description\": \"2晚酒店住宿\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/reimbursement",
+              "host": ["{{base_url}}"],
+              "path": ["reimbursement"]
+            }
+          }
+        },
+        {
+          "name": "分页查询报销单",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/reimbursement/page?pageNum=1&pageSize=10",
+              "host": ["{{base_url}}"],
+              "path": ["reimbursement", "page"],
+              "query": [
+                {
+                  "key": "pageNum",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "根据ID查询报销单",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/reimbursement/1",
+              "host": ["{{base_url}}"],
+              "path": ["reimbursement", "1"]
+            }
+          }
+        },
+        {
+          "name": "提交报销单",
+          "request": {
+            "method": "PUT",
+            "url": {
+              "raw": "{{base_url}}/reimbursement/submit/1",
+              "host": ["{{base_url}}"],
+              "path": ["reimbursement", "submit", "1"]
+            }
+          }
+        },
+        {
+          "name": "审批报销单",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 2,\n  \"approverId\": 3,\n  \"result\": \"APPROVED\",\n  \"comment\": \"同意报销\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/reimbursement/approve",
+              "host": ["{{base_url}}"],
+              "path": ["reimbursement", "approve"]
+            }
+          }
+        },
+        {
+          "name": "批量审批报销单",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ids\": [2, 3],\n  \"approverId\": 2,\n  \"result\": \"APPROVED\",\n  \"comment\": \"批量通过\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/reimbursement/batch-approve",
+              "host": ["{{base_url}}"],
+              "path": ["reimbursement", "batch-approve"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080/api",
+      "type": "string"
+    }
+  ]
+}

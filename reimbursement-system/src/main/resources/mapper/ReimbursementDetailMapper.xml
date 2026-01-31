@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.reimbursement.mapper.ReimbursementDetailMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.example.reimbursement.entity.ReimbursementDetail">
+        <id column="id" property="id"/>
+        <result column="form_id" property="formId"/>
+        <result column="item_name" property="itemName"/>
+        <result column="amount" property="amount"/>
+        <result column="occurrence_date" property="occurrenceDate"/>
+        <result column="description" property="description"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <!-- 基本字段 -->
+    <sql id="Base_Column_List">
+        id, form_id, item_name, amount, occurrence_date, description, create_time
+    </sql>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM reimbursement_detail
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据报销单ID查询明细列表 -->
+    <select id="selectByFormId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM reimbursement_detail
+        WHERE form_id = #{formId}
+        ORDER BY create_time ASC
+    </select>
+
+    <!-- 插入 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO reimbursement_detail 
+        (form_id, item_name, amount, occurrence_date, description)
+        VALUES 
+        (#{formId}, #{itemName}, #{amount}, #{occurrenceDate}, #{description})
+    </insert>
+
+    <!-- 批量插入 -->
+    <insert id="batchInsert">
+        INSERT INTO reimbursement_detail 
+        (form_id, item_name, amount, occurrence_date, description)
+        VALUES
+        <foreach collection="list" item="detail" separator=",">
+            (#{detail.formId}, #{detail.itemName}, #{detail.amount}, 
+             #{detail.occurrenceDate}, #{detail.description})
+        </foreach>
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update">
+        UPDATE reimbursement_detail
+        <set>
+            <if test="itemName != null and itemName != ''">item_name = #{itemName},</if>
+            <if test="amount != null">amount = #{amount},</if>
+            <if test="occurrenceDate != null">occurrence_date = #{occurrenceDate},</if>
+            <if test="description != null">description = #{description},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="deleteById">
+        DELETE FROM reimbursement_detail WHERE id = #{id}
+    </delete>
+
+    <!-- 根据报销单ID删除 -->
+    <delete id="deleteByFormId">
+        DELETE FROM reimbursement_detail WHERE form_id = #{formId}
+    </delete>
+
+</mapper>

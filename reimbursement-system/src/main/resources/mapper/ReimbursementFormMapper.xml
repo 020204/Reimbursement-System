@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.reimbursement.mapper.ReimbursementFormMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.example.reimbursement.entity.ReimbursementForm">
+        <id column="id" property="id"/>
+        <result column="form_no" property="formNo"/>
+        <result column="employee_id" property="employeeId"/>
+        <result column="title" property="title"/>
+        <result column="type" property="type"/>
+        <result column="amount" property="amount"/>
+        <result column="description" property="description"/>
+        <result column="attachment" property="attachment"/>
+        <result column="status" property="status"/>
+        <result column="submit_time" property="submitTime"/>
+        <result column="approve_time" property="approveTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="employee_name" property="employeeName"/>
+    </resultMap>
+
+    <!-- 基本字段 -->
+    <sql id="Base_Column_List">
+        rf.id, rf.form_no, rf.employee_id, rf.title, rf.type, rf.amount, 
+        rf.description, rf.attachment, rf.status, rf.submit_time, rf.approve_time,
+        rf.create_time, rf.update_time, e.name as employee_name
+    </sql>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM reimbursement_form rf
+        LEFT JOIN employee e ON rf.employee_id = e.id
+        WHERE rf.id = #{id}
+    </select>
+
+    <!-- 根据报销单号查询 -->
+    <select id="selectByFormNo" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM reimbursement_form rf
+        LEFT JOIN employee e ON rf.employee_id = e.id
+        WHERE rf.form_no = #{formNo}
+    </select>
+
+    <!-- 查询所有 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM reimbursement_form rf
+        LEFT JOIN employee e ON rf.employee_id = e.id
+        ORDER BY rf.create_time DESC
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM reimbursement_form rf
+        LEFT JOIN employee e ON rf.employee_id = e.id
+        WHERE 1=1
+        <if test="employeeId != null">
+            AND rf.employee_id = #{employeeId}
+        </if>
+        <if test="status != null and status != ''">
+            AND rf.status = #{status}
+        </if>
+        <if test="type != null and type != ''">
+            AND rf.type = #{type}
+        </if>
+        ORDER BY rf.create_time DESC
+    </select>
+
+    <!-- 统计数量 -->
+    <select id="countByCondition" resultType="int">
+        SELECT COUNT(*)
+        FROM reimbursement_form
+        WHERE 1=1
+        <if test="employeeId != null">
+            AND employee_id = #{employeeId}
+        </if>
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+    </select>
+
+    <!-- 插入 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO reimbursement_form 
+        (form_no, employee_id, title, type, amount, description, attachment, status, submit_time)
+        VALUES 
+        (#{formNo}, #{employeeId}, #{title}, #{type}, #{amount}, #{description}, #{attachment}, #{status}, #{submitTime})
+    </insert>
+
+    <!-- 批量插入 -->
+    <insert id="batchInsert">
+        INSERT INTO reimbursement_form 
+        (form_no, employee_id, title, type, amount, description, attachment, status)
+        VALUES
+        <foreach collection="list" item="form" separator=",">
+            (#{form.formNo}, #{form.employeeId}, #{form.title}, #{form.type}, 
+             #{form.amount}, #{form.description}, #{form.attachment}, #{form.status})
+        </foreach>
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update">
+        UPDATE reimbursement_form
+        <set>
+            <if test="title != null and title != ''">title = #{title},</if>
+            <if test="type != null and type != ''">type = #{type},</if>
+            <if test="amount != null">amount = #{amount},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="attachment != null">attachment = #{attachment},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="submitTime != null">submit_time = #{submitTime},</if>
+            <if test="approveTime != null">approve_time = #{approveTime},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 批量更新状态 -->
+    <update id="batchUpdateStatus">
+        UPDATE reimbursement_form
+        SET status = #{status}
+        WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <!-- 删除 -->
+    <delete id="deleteById">
+        DELETE FROM reimbursement_form WHERE id = #{id}
+    </delete>
+
+</mapper>
