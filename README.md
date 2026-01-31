@@ -1,0 +1,2 @@
+# Reimbursement-System
+前后端项目! 📦 项目文件清单 1. 后端项目 (reimbursement-system) ✅ Spring Boot + MyBatis + Redis + Shiro ✅ 22个Java文件,4个Mapper XML ✅ 完整的数据库初始化脚本 ✅ Postman测试集合 2. 前端项目 (reimbursement-frontend) ✅ Vue 3 + Element Plus + Pinia + Vite ✅ 登录页、仪表盘、报销管理、审批中心、员工管理 ✅ 动态报销明细表单 ✅ 批量审批功能 ✅ 完整的路由和状态管理
