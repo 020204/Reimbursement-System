@@ -39,6 +39,13 @@ spring:
         max-wait: -1
         max-idle: 8
         min-idle: 0
+  
+  # 自动配置排除(解决Shiro Bean冲突问题)
+  autoconfigure:
+    exclude:
+      - org.apache.shiro.spring.boot.autoconfigure.ShiroAutoConfiguration
+      - org.apache.shiro.spring.boot.autoconfigure.ShiroBeanAutoConfiguration
+      - org.apache.shiro.spring.config.web.autoconfigure.ShiroWebAutoConfiguration
 
 # MyBatis配置
 mybatis:
