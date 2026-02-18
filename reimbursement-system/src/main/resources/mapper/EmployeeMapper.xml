@@ -12,15 +12,17 @@
         <result column="email" property="email"/>
         <result column="phone" property="phone"/>
         <result column="department" property="department"/>
+        <result column="department_id" property="departmentId"/>
         <result column="position" property="position"/>
         <result column="status" property="status"/>
+        <result column="hire_date" property="hireDate"/>
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
     </resultMap>
 
     <!-- 基本字段 -->
     <sql id="Base_Column_List">
-        id, username, password, name, email, phone, department, position, status, create_time, update_time
+        id, username, password, name, email, phone, department, department_id, position, status, hire_date, create_time, update_time
     </sql>
 
     <!-- 根据ID查询 -->
@@ -69,8 +71,8 @@
 
     <!-- 插入 -->
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO employee (username, password, name, email, phone, department, position, status)
-        VALUES (#{username}, #{password}, #{name}, #{email}, #{phone}, #{department}, #{position}, #{status})
+        INSERT INTO employee (username, password, name, email, phone, department, department_id, position, status, hire_date)
+        VALUES (#{username}, #{password}, #{name}, #{email}, #{phone}, #{department}, #{departmentId}, #{position}, #{status}, #{hireDate})
     </insert>
 
     <!-- 更新 -->
@@ -82,8 +84,10 @@
             <if test="email != null">email = #{email},</if>
             <if test="phone != null">phone = #{phone},</if>
             <if test="department != null">department = #{department},</if>
+            <if test="departmentId != null">department_id = #{departmentId},</if>
             <if test="position != null">position = #{position},</if>
             <if test="status != null">status = #{status},</if>
+            <if test="hireDate != null">hire_date = #{hireDate},</if>
         </set>
         WHERE id = #{id}
     </update>
@@ -93,11 +97,18 @@
         DELETE FROM employee WHERE id = #{id}
     </delete>
 
-    <!-- 根据部门查询员工ID列表 -->
+    <!-- 根据部门名称查询员工ID列表 -->
     <select id="selectIdsByDepartment" resultType="java.lang.Integer">
         SELECT id
         FROM employee
         WHERE department = #{department}
+    </select>
+
+    <!-- 根据部门ID查询员工ID列表 -->
+    <select id="selectIdsByDepartmentId" resultType="java.lang.Integer">
+        SELECT id
+        FROM employee
+        WHERE department_id = #{departmentId}
     </select>
 
 </mapper>

@@ -179,4 +179,28 @@ public class EmployeeService {
     public Set<String> getRoleCodesByUsername(String username) {
         return employeeMapper.selectRoleCodesByUsername(username);
     }
+
+    /**
+     * 修改密码
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void changePassword(String username, String oldPassword, String newPassword) {
+        Employee employee = employeeMapper.selectByUsername(username);
+        if (employee == null) {
+            throw new BusinessException("用户不存在");
+        }
+
+        // 验证旧密码
+        if (!MD5Util.verify(oldPassword, employee.getPassword())) {
+            throw new BusinessException("旧密码错误");
+        }
+
+        // 更新密码
+        Employee updateEmp = new Employee();
+        updateEmp.setId(employee.getId());
+        updateEmp.setPassword(MD5Util.encrypt(newPassword));
+        employeeMapper.update(updateEmp);
+
+        log.info("用户修改密码成功, username: {}", username);
+    }
 }

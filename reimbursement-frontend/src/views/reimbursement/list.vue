@@ -140,10 +140,15 @@ const userStore = useUserStore()
 const loading = ref(false)
 const tableData = ref([])
 
+// 判断是否是 ADMIN 或 FINANCE（可以查看所有报销单）
+const canViewAll = computed(() => {
+  return userStore.isAdmin || userStore.isFinance
+})
+
 const queryForm = reactive({
   status: '',
   type: '',
-  employeeId: userStore.userInfo.id // 只查询当前用户的报销单
+  employeeId: canViewAll.value ? null : userStore.userInfo?.id // ADMIN/FINANCE 查看所有，其他只看自己的
 })
 
 const pagination = reactive({

@@ -50,19 +50,34 @@ const router = createRouter({
           path: '/approval',
           name: 'Approval',
           component: () => import('@/views/approval/index.vue'),
-          meta: { 
+          meta: {
             title: '审批中心',
-            roles: ['ADMIN', 'FINANCE', 'MANAGER']
+            roles: ['ADMIN']
           }
         },
         {
           path: '/employee/list',
           name: 'EmployeeList',
           component: () => import('@/views/employee/list.vue'),
-          meta: { 
+          meta: {
             title: '员工管理',
             roles: ['ADMIN']
           }
+        },
+        {
+          path: '/department',
+          name: 'Department',
+          component: () => import('@/views/department/index.vue'),
+          meta: {
+            title: '部门管理',
+            roles: ['ADMIN']
+          }
+        },
+        {
+          path: '/profile',
+          name: 'Profile',
+          component: () => import('@/views/profile/index.vue'),
+          meta: { title: '个人信息' }
         }
       ]
     }

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.reimbursement.mapper.DepartmentMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.example.reimbursement.entity.Department">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="code" property="code"/>
+        <result column="description" property="description"/>
+        <result column="manager_id" property="managerId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 基本字段 -->
+    <sql id="Base_Column_List">
+        id, name, code, description, manager_id, create_time, update_time
+    </sql>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM department
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据编码查询 -->
+    <select id="selectByCode" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM department
+        WHERE code = #{code}
+    </select>
+
+    <!-- 查询所有 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM department
+        ORDER BY id ASC
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM department
+        WHERE 1=1
+        <if test="name != null and name != ''">
+            AND name LIKE CONCAT('%', #{name}, '%')
+        </if>
+        <if test="code != null and code != ''">
+            AND code = #{code}
+        </if>
+        ORDER BY id ASC
+    </select>
+
+    <!-- 插入 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO department (name, code, description, manager_id)
+        VALUES (#{name}, #{code}, #{description}, #{managerId})
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update">
+        UPDATE department
+        <set>
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="code != null and code != ''">code = #{code},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="managerId != null">manager_id = #{managerId},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="deleteById">
+        DELETE FROM department WHERE id = #{id}
+    </delete>
+
+</mapper>

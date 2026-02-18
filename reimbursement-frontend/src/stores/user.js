@@ -26,11 +26,14 @@ export const useUserStore = defineStore('user', {
     
     // 是否是主管
     isManager: (state) => state.roles.includes('MANAGER'),
-    
+
+    // 是否是HR
+    isHR: (state) => state.roles.includes('HR'),
+
     // 是否有审批权限
     canApprove: (state) => {
-      return state.roles.includes('ADMIN') || 
-             state.roles.includes('FINANCE') || 
+      return state.roles.includes('ADMIN') ||
+             state.roles.includes('FINANCE') ||
              state.roles.includes('MANAGER')
     }
   },
@@ -85,20 +88,28 @@ export const useUserStore = defineStore('user', {
     // 根据用户信息判断角色(简化处理)
     getUserRoles(user) {
       const roles = []
-      
+
       if (user.position === '系统管理员') {
         roles.push('ADMIN')
       }
       if (user.department === '财务部' || user.position?.includes('财务')) {
         roles.push('FINANCE')
       }
+      if (user.department === '行政部' || user.position?.includes('人事') || user.position?.includes('HR')) {
+        roles.push('HR')
+      }
       if (user.position?.includes('主管') || user.position?.includes('经理')) {
         roles.push('MANAGER')
       }
-      
+
       roles.push('EMPLOYEE') // 所有人都是员工
-      
+
       return roles
+    },
+
+    // 设置用户信息
+    setUserInfo(userInfo) {
+      this.userInfo = userInfo
     }
   },
   

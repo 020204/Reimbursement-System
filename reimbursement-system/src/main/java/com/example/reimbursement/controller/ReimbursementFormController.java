@@ -151,7 +151,7 @@ public class ReimbursementFormController {
      * 审批报销单
      */
     @PutMapping("/approve")
-    @RequiresRoles({"MANAGER", "FINANCE"})
+    @RequiresRoles("ADMIN")
     public Result<?> approve(@RequestBody Map<String, Object> params) {
         Integer id = (Integer) params.get("id");
         Integer approverId = (Integer) params.get("approverId");
@@ -166,7 +166,7 @@ public class ReimbursementFormController {
      * 批量审批报销单
      */
     @PutMapping("/batch-approve")
-    @RequiresRoles({"MANAGER", "FINANCE"})
+    @RequiresRoles("ADMIN")
     public Result<?> batchApprove(@RequestBody Map<String, Object> params) {
         @SuppressWarnings("unchecked")
         List<Integer> ids = (List<Integer>) params.get("ids");

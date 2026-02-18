@@ -55,7 +55,12 @@ public interface EmployeeMapper {
                                      @Param("department") String department);
 
     /**
-     * 根据部门查询员工ID列表
+     * 根据部门名称查询员工ID列表
      */
     List<Integer> selectIdsByDepartment(@Param("department") String department);
+
+    /**
+     * 根据部门ID查询员工ID列表
+     */
+    List<Integer> selectIdsByDepartmentId(@Param("departmentId") Integer departmentId);
 }

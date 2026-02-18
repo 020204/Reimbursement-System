@@ -6,6 +6,7 @@ import com.example.reimbursement.service.EmployeeService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.authz.annotation.RequiresRoles;
 import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -69,6 +70,51 @@ public class EmployeeController {
     }
 
     /**
+     * 更新当前登录用户信息（个人信息）
+     */
+    @PutMapping("/profile")
+    public Result<?> updateProfile(@RequestBody Employee employee) {
+        Subject subject = SecurityUtils.getSubject();
+        String username = (String) subject.getPrincipal();
+        Employee currentUser = employeeService.getByUsername(username);
+        
+        // 只能修改自己的信息
+        if (!currentUser.getId().equals(employee.getId())) {
+            return Result.error("只能修改自己的信息");
+        }
+        
+        // 不允许修改的字段
+        employee.setUsername(null);
+        employee.setPassword(null);
+        employee.setStatus(null);
+        employee.setDepartment(null);
+        employee.setDepartmentId(null);
+        employee.setPosition(null);
+        
+        employeeService.update(employee);
+        return Result.success("更新成功");
+    }
+
+    /**
+     * 修改密码
+     */
+    @PutMapping("/change-password")
+    public Result<?> changePassword(@RequestBody Map<String, String> params) {
+        String oldPassword = params.get("oldPassword");
+        String newPassword = params.get("newPassword");
+        
+        if (oldPassword == null || newPassword == null) {
+            return Result.error("旧密码和新密码不能为空");
+        }
+        
+        Subject subject = SecurityUtils.getSubject();
+        String username = (String) subject.getPrincipal();
+        
+        employeeService.changePassword(username, oldPassword, newPassword);
+        return Result.success("密码修改成功");
+    }
+
+    /**
      * 根据ID查询员工
      */
     @GetMapping("/{id}")
@@ -97,27 +143,30 @@ public class EmployeeController {
     }
 
     /**
-     * 添加员工
+     * 添加员工（仅 ADMIN）
      */
     @PostMapping
+    @RequiresRoles("ADMIN")
     public Result<?> add(@RequestBody Employee employee) {
         employeeService.add(employee);
         return Result.success("添加成功");
     }
 
     /**
-     * 更新员工
+     * 更新员工（仅 ADMIN）
      */
     @PutMapping
+    @RequiresRoles("ADMIN")
     public Result<?> update(@RequestBody Employee employee) {
         employeeService.update(employee);
         return Result.success("更新成功");
     }
 
     /**
-     * 删除员工
+     * 删除员工（仅 ADMIN）
      */
     @DeleteMapping("/{id}")
+    @RequiresRoles("ADMIN")
     public Result<?> delete(@PathVariable Integer id) {
         employeeService.delete(id);
         return Result.success("删除成功");

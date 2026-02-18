@@ -28,7 +28,7 @@
         </el-sub-menu>
         
         <el-menu-item 
-          v-if="userStore.canApprove" 
+          v-if="userStore.isAdmin" 
           index="/approval"
         >
           <el-icon><Check /></el-icon>
@@ -41,6 +41,14 @@
         >
           <el-icon><User /></el-icon>
           <template #title>员工管理</template>
+        </el-menu-item>
+        
+        <el-menu-item 
+          v-if="userStore.isAdmin" 
+          index="/department"
+        >
+          <el-icon><OfficeBuilding /></el-icon>
+          <template #title>部门管理</template>
         </el-menu-item>
       </el-menu>
     </el-aside>
@@ -127,7 +135,7 @@ const handleCommand = async (command) => {
       // 取消操作
     }
   } else if (command === 'profile') {
-    ElMessage.info('个人信息页面开发中...')
+    router.push('/profile')
   }
 }
 </script>

@@ -42,9 +42,14 @@ public class Employee implements Serializable {
     private String phone;
 
     /**
-     * 部门
+     * 部门名称（冗余字段）
      */
     private String department;
+
+    /**
+     * 部门ID（外键关联）
+     */
+    private Integer departmentId;
 
     /**
      * 职位
@@ -55,6 +60,11 @@ public class Employee implements Serializable {
      * 状态:1-在职,0-离职
      */
     private Integer status;
+
+    /**
+     * 入职时间
+     */
+    private Date hireDate;
 
     /**
      * 创建时间

@@ -1,9 +1,8 @@
--- 创建数据库
+-- 创建数据库（如果不存在）
 CREATE DATABASE IF NOT EXISTS reimbursement_db DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
 USE reimbursement_db;
 
--- 员工表
+-- 先创建 employee 表（被引用表）
 DROP TABLE IF EXISTS employee;
 CREATE TABLE employee (
     id INT AUTO_INCREMENT PRIMARY KEY COMMENT '员工ID',
@@ -12,16 +11,38 @@ CREATE TABLE employee (
     name VARCHAR(50) NOT NULL COMMENT '姓名',
     email VARCHAR(100) COMMENT '邮箱',
     phone VARCHAR(20) COMMENT '手机号',
-    department VARCHAR(50) COMMENT '部门',
+    department VARCHAR(50) COMMENT '部门（冗余字段，可选保留）',
+    department_id INT COMMENT '部门ID（外键，稍后添加）',
     position VARCHAR(50) COMMENT '职位',
     status TINYINT DEFAULT 1 COMMENT '状态:1-在职,0-离职',
+    hire_date DATE COMMENT '入职时间',
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     INDEX idx_username (username),
     INDEX idx_department (department)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='员工表';
 
--- 角色表
+-- 再创建 department 表（引用 employee）
+DROP TABLE IF EXISTS department;
+CREATE TABLE department (
+    id INT AUTO_INCREMENT PRIMARY KEY COMMENT '部门ID',
+    name VARCHAR(50) NOT NULL UNIQUE COMMENT '部门名称',
+    code VARCHAR(20) NOT NULL UNIQUE COMMENT '部门编码',
+    description VARCHAR(200) COMMENT '部门描述',
+    manager_id INT COMMENT '部门经理ID（可选，关联employee）',
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX idx_name (name),
+    INDEX idx_code (code),
+    FOREIGN KEY (manager_id) REFERENCES employee(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='部门表';
+
+-- 给 employee 表添加 department_id 外键（现在 department 已存在）
+ALTER TABLE employee
+ADD CONSTRAINT fk_employee_department
+FOREIGN KEY (department_id) REFERENCES department(id) ON DELETE SET NULL;
+
+-- 继续创建其他表（顺序无影响，因为它们不互相引用或引用已存在的表）
 DROP TABLE IF EXISTS role;
 CREATE TABLE role (
     id INT AUTO_INCREMENT PRIMARY KEY COMMENT '角色ID',
@@ -32,7 +53,6 @@ CREATE TABLE role (
     update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色表';
 
--- 用户角色关联表
 DROP TABLE IF EXISTS user_role;
 CREATE TABLE user_role (
     id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'ID',
@@ -44,7 +64,6 @@ CREATE TABLE user_role (
     FOREIGN KEY (role_id) REFERENCES role(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户角色关联表';
 
--- 报销单表
 DROP TABLE IF EXISTS reimbursement_form;
 CREATE TABLE reimbursement_form (
     id INT AUTO_INCREMENT PRIMARY KEY COMMENT '报销单ID',
@@ -60,14 +79,13 @@ CREATE TABLE reimbursement_form (
     approve_time TIMESTAMP NULL COMMENT '审批完成时间',
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    FOREIGN KEY (employee_id) REFERENCES employee(id),
+    FOREIGN KEY (employee_id) REFERENCES employee(id) ON DELETE RESTRICT,
     INDEX idx_employee_id (employee_id),
     INDEX idx_status (status),
     INDEX idx_form_no (form_no),
     INDEX idx_create_time (create_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='报销单表';
 
--- 报销明细表
 DROP TABLE IF EXISTS reimbursement_detail;
 CREATE TABLE reimbursement_detail (
     id INT AUTO_INCREMENT PRIMARY KEY COMMENT '明细ID',
@@ -81,7 +99,6 @@ CREATE TABLE reimbursement_detail (
     INDEX idx_form_id (form_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='报销明细表';
 
--- 审批记录表
 DROP TABLE IF EXISTS approval_record;
 CREATE TABLE approval_record (
     id INT AUTO_INCREMENT PRIMARY KEY COMMENT '审批记录ID',
@@ -92,12 +109,11 @@ CREATE TABLE approval_record (
     comment TEXT COMMENT '审批意见',
     approval_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '审批时间',
     FOREIGN KEY (form_id) REFERENCES reimbursement_form(id) ON DELETE CASCADE,
-    FOREIGN KEY (approver_id) REFERENCES employee(id),
+    FOREIGN KEY (approver_id) REFERENCES employee(id) ON DELETE RESTRICT,
     INDEX idx_form_id (form_id),
     INDEX idx_approver_id (approver_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='审批记录表';
 
--- 操作日志表
 DROP TABLE IF EXISTS operation_log;
 CREATE TABLE operation_log (
     id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '日志ID',
@@ -113,7 +129,20 @@ CREATE TABLE operation_log (
     INDEX idx_create_time (create_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='操作日志表';
 
--- 插入初始数据
+-- 插入初始数据（部门表先插入，员工表再关联 department_id）
+INSERT INTO department (name, code, description) VALUES
+('IT部', 'IT', '信息技术部'),
+('财务部', 'FINANCE', '财务管理部'),
+('销售部', 'SALES', '市场销售部'),
+('行政部', 'ADMIN', '行政人事部');
+
+-- 插入员工（关联 department_id）
+INSERT INTO employee (username, password, name, email, phone, department, department_id, position, status) VALUES
+('admin', 'e10adc3949ba59abbe56e057f20f883e', '系统管理员', 'admin@example.com', '13800000001', 'IT部', 1, '系统管理员', 1),
+('finance', 'e10adc3949ba59abbe56e057f20f883e', '财务张三', 'finance@example.com', '13800000002', '财务部', 2, '财务主管', 1),
+('manager', 'e10adc3949ba59abbe56e057f20f883e', '主管李四', 'manager@example.com', '13800000003', '销售部', 3, '销售主管', 1),
+('employee', 'e10adc3949ba59abbe56e057f20f883e', '员工王五', 'employee@example.com', '13800000004', '销售部', 3, '销售专员', 1);
+
 -- 插入角色
 INSERT INTO role (name, code, description) VALUES
 ('管理员', 'ADMIN', '系统管理员'),
@@ -121,21 +150,11 @@ INSERT INTO role (name, code, description) VALUES
 ('部门主管', 'MANAGER', '部门主管'),
 ('普通员工', 'EMPLOYEE', '普通员工');
 
--- 插入员工 (密码都是: 123456, 使用MD5加密后的值)
-INSERT INTO employee (username, password, name, email, phone, department, position) VALUES
-('admin', 'e10adc3949ba59abbe56e057f20f883e', '系统管理员', 'admin@example.com', '13800000001', 'IT部', '系统管理员'),
-('finance', 'e10adc3949ba59abbe56e057f20f883e', '财务张三', 'finance@example.com', '13800000002', '财务部', '财务主管'),
-('manager', 'e10adc3949ba59abbe56e057f20f883e', '主管李四', 'manager@example.com', '13800000003', '销售部', '销售主管'),
-('employee', 'e10adc3949ba59abbe56e057f20f883e', '员工王五', 'employee@example.com', '13800000004', '销售部', '销售专员');
-
 -- 分配角色
 INSERT INTO user_role (employee_id, role_id) VALUES
-(1, 1), -- admin -> ADMIN
-(2, 2), -- finance -> FINANCE
-(3, 3), -- manager -> MANAGER
-(4, 4); -- employee -> EMPLOYEE
+(1, 1), (2, 2), (3, 3), (4, 4);
 
--- 插入示例报销单
+-- 插入示例报销单（原数据不变）
 INSERT INTO reimbursement_form (form_no, employee_id, title, type, amount, description, status, submit_time) VALUES
 ('RB202401001', 4, '北京出差报销', 'TRAVEL', 3500.00, '2024年1月北京客户拜访差旅费', 'APPROVED', '2024-01-10 10:00:00'),
 ('RB202401002', 4, '办公用品采购', 'OFFICE', 580.00, '部门办公用品采购', 'PENDING', '2024-01-15 14:30:00'),

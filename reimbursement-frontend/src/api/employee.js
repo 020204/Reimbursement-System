@@ -79,3 +79,21 @@ export function deleteEmployee(id) {
     method: 'delete'
   })
 }
+
+// 更新个人信息
+export function updateProfile(data) {
+  return request({
+    url: '/employee/profile',
+    method: 'put',
+    data
+  })
+}
+
+// 修改密码
+export function changePassword(data) {
+  return request({
+    url: '/employee/change-password',
+    method: 'put',
+    data
+  })
+}

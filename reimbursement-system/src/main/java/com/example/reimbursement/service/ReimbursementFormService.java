@@ -89,16 +89,8 @@ public class ReimbursementFormService {
         if (userRoles.contains("ADMIN") || userRoles.contains("FINANCE")) {
             // 管理员/财务：查看全部
             list = formMapper.selectByCondition(null, status, type);
-        } else if (userRoles.contains("MANAGER")) {
-            // 部门主管：查看本部门员工
-            List<Integer> deptEmployeeIds = employeeMapper.selectIdsByDepartment(currentUser.getDepartment());
-            if (deptEmployeeIds == null || deptEmployeeIds.isEmpty()) {
-                list = new java.util.ArrayList<>();
-            } else {
-                list = formMapper.selectByEmployeeIds(deptEmployeeIds, status, type);
-            }
         } else {
-            // 普通员工：只能看自己
+            // 其他角色（包括 MANAGER、普通员工）：只能看自己
             list = formMapper.selectByCondition(currentUser.getId(), status, type);
         }
 
