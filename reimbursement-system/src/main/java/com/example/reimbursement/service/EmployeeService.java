@@ -153,6 +153,8 @@ public class EmployeeService {
         if (StringUtils.isBlank(username) || StringUtils.isBlank(password)) {
             throw new BusinessException("用户名或密码不能为空");
         }
+        username = username.trim();
+        password = password.trim();
 
         Employee employee = employeeMapper.selectByUsername(username);
         if (employee == null) {

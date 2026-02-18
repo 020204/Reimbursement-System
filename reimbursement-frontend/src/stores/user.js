@@ -52,18 +52,21 @@ export const useUserStore = defineStore('user', {
       }
     },
     
+    // 仅清除本地状态（用于 401 时，避免再请求后端）
+    clearUserOnly() {
+      this.userInfo = null
+      this.token = null
+      this.roles = []
+    },
+
     // 登出
     async logout() {
       try {
         await logout()
-        this.userInfo = null
-        this.token = null
-        this.roles = []
       } catch (error) {
         // 即使后端报错也清除本地信息
-        this.userInfo = null
-        this.token = null
-        this.roles = []
+      } finally {
+        this.clearUserOnly()
       }
     },
     
@@ -101,12 +104,7 @@ export const useUserStore = defineStore('user', {
   
   // 持久化
   persist: {
-    enabled: true,
-    strategies: [
-      {
-        key: 'user',
-        storage: localStorage
-      }
-    ]
+    key: 'user',
+    storage: localStorage
   }
 })

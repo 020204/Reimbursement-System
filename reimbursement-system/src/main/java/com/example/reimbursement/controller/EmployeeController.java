@@ -35,7 +35,7 @@ public class EmployeeController {
 
         Employee employee = employeeService.login(username, password);
 
-        // Shiro登录
+        // Shiro 登录：Token 传明文密码，Realm 返回 DB 中的 MD5，由 Md5CredentialsMatcher 做比对
         Subject subject = SecurityUtils.getSubject();
         UsernamePasswordToken token = new UsernamePasswordToken(username, password);
         subject.login(token);

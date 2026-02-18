@@ -51,6 +51,11 @@ public interface EmployeeMapper {
     /**
      * 条件查询员工
      */
-    List<Employee> selectByCondition(@Param("name") String name, 
+    List<Employee> selectByCondition(@Param("name") String name,
                                      @Param("department") String department);
+
+    /**
+     * 根据部门查询员工ID列表
+     */
+    List<Integer> selectIdsByDepartment(@Param("department") String department);
 }

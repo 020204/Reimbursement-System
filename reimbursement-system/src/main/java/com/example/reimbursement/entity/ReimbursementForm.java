@@ -4,6 +4,7 @@ import lombok.Data;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
 /**
  * 报销单实体类
@@ -81,4 +82,9 @@ public class ReimbursementForm implements Serializable {
      * 申请人姓名(非数据库字段)
      */
     private String employeeName;
+
+    /**
+     * 报销明细列表(非数据库字段)
+     */
+    private List<ReimbursementDetail> details;
 }

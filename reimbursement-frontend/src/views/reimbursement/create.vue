@@ -3,7 +3,7 @@
     <el-card shadow="hover">
       <template #header>
         <div class="card-header">
-          <span>创建报销单</span>
+          <span>{{ isEditMode ? '编辑报销单' : '创建报销单' }}</span>
           <el-button @click="goBack">返回</el-button>
         </div>
       </template>
@@ -136,9 +136,14 @@
         <!-- 操作按钮 -->
         <el-form-item>
           <el-button type="primary" @click="handleSave" :loading="saving">
-            保存草稿
+            {{ isEditMode ? '保存修改' : '保存草稿' }}
           </el-button>
-          <el-button type="success" @click="handleSubmit" :loading="submitting">
+          <el-button 
+            v-if="!isEditMode" 
+            type="success" 
+            @click="handleSubmit" 
+            :loading="submitting"
+          >
             提交审批
           </el-button>
           <el-button @click="goBack">取消</el-button>
@@ -149,14 +154,19 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { createForm } from '@/api/reimbursement'
+import { createForm, updateForm, getFormById } from '@/api/reimbursement'
 import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
+
+// 判断是否为编辑模式
+const isEditMode = computed(() => route.name === 'ReimbursementEdit')
+const formId = computed(() => route.params.id)
 
 const formRef = ref(null)
 const saving = ref(false)
@@ -201,6 +211,36 @@ const removeDetail = (index) => {
   form.details.splice(index, 1)
 }
 
+// 加载报销单数据（编辑模式）
+const loadFormData = async () => {
+  if (!isEditMode.value || !formId.value) return
+  
+  try {
+    const res = await getFormById(formId.value)
+    const data = res.data
+    
+    // 填充表单数据
+    form.id = data.id
+    form.employeeId = data.employeeId
+    form.title = data.title
+    form.type = data.type
+    form.description = data.description
+    form.attachment = data.attachment
+    
+    // 填充明细数据（需要转换日期格式）
+    if (data.details && data.details.length > 0) {
+      form.details = data.details.map(d => ({
+        ...d,
+        occurrenceDate: d.occurrenceDate ? d.occurrenceDate.split('T')[0] : ''
+      }))
+    }
+  } catch (error) {
+    console.error('加载报销单失败:', error)
+    ElMessage.error('加载报销单失败')
+    router.push('/reimbursement/list')
+  }
+}
+
 // 保存草稿
 const handleSave = async () => {
   if (!formRef.value) return
@@ -221,8 +261,13 @@ const handleSave = async () => {
       
       saving.value = true
       try {
-        await createForm(form)
-        ElMessage.success('保存成功')
+        if (isEditMode.value) {
+          await updateForm(form)
+          ElMessage.success('修改成功')
+        } else {
+          await createForm(form)
+          ElMessage.success('保存成功')
+        }
         router.push('/reimbursement/list')
       } catch (error) {
         console.error('保存失败:', error)
@@ -232,6 +277,11 @@ const handleSave = async () => {
     }
   })
 }
+
+// 页面加载时如果是编辑模式则加载数据
+onMounted(() => {
+  loadFormData()
+})
 
 // 提交审批
 const handleSubmit = async () => {

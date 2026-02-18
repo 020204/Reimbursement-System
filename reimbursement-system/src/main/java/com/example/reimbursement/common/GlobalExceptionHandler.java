@@ -1,6 +1,9 @@
 package com.example.reimbursement.common;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.shiro.authc.AuthenticationException;
+import org.apache.shiro.authc.IncorrectCredentialsException;
+import org.apache.shiro.authc.UnknownAccountException;
 import org.apache.shiro.authz.AuthorizationException;
 import org.apache.shiro.authz.UnauthorizedException;
 import org.springframework.validation.BindException;
@@ -54,6 +57,21 @@ public class GlobalExceptionHandler {
             sb.append(error.getField()).append(":").append(error.getDefaultMessage()).append("; ");
         }
         return Result.error(sb.toString());
+    }
+
+    /**
+     * 处理 Shiro 登录/认证异常（密码错误、用户不存在等）
+     */
+    @ExceptionHandler({IncorrectCredentialsException.class, UnknownAccountException.class, AuthenticationException.class})
+    public Result<?> handleAuthenticationException(Exception e, HttpServletRequest request) {
+        log.warn("登录认证异常: {}, URL: {}", e.getMessage(), request.getRequestURI());
+        if (e instanceof UnknownAccountException) {
+            return Result.error("用户名不存在");
+        }
+        if (e instanceof IncorrectCredentialsException) {
+            return Result.error("用户名或密码错误");
+        }
+        return Result.error("登录失败，请检查用户名和密码");
     }
 
     /**

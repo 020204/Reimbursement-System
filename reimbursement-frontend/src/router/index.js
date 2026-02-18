@@ -35,6 +35,12 @@ const router = createRouter({
           meta: { title: '创建报销单' }
         },
         {
+          path: '/reimbursement/edit/:id',
+          name: 'ReimbursementEdit',
+          component: () => import('@/views/reimbursement/create.vue'),
+          meta: { title: '编辑报销单' }
+        },
+        {
           path: '/reimbursement/detail/:id',
           name: 'ReimbursementDetail',
           component: () => import('@/views/reimbursement/detail.vue'),
@@ -66,6 +72,9 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
+  
+  // 等待 Pinia 状态恢复（从 localStorage 读取）
+  // pinia-plugin-persistedstate 是同步恢复的，所以直接检查即可
   
   // 需要登录的页面
   if (to.meta.requiresAuth !== false) {

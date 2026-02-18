@@ -2,14 +2,20 @@ package com.example.reimbursement.controller;
 
 import com.example.reimbursement.common.PageResult;
 import com.example.reimbursement.common.Result;
+import com.example.reimbursement.entity.Employee;
 import com.example.reimbursement.entity.ReimbursementDetail;
 import com.example.reimbursement.entity.ReimbursementForm;
+import com.example.reimbursement.service.EmployeeService;
 import com.example.reimbursement.service.ReimbursementFormService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authz.annotation.RequiresRoles;
+import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +30,12 @@ public class ReimbursementFormController {
     @Autowired
     private ReimbursementFormService formService;
 
+    @Autowired
+    private EmployeeService employeeService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
     /**
      * 根据ID查询报销单
      */
@@ -34,7 +46,7 @@ public class ReimbursementFormController {
     }
 
     /**
-     * 分页查询报销单
+     * 分页查询报销单（带权限控制）
      */
     @GetMapping("/page")
     public Result<PageResult<ReimbursementForm>> getByPage(
@@ -44,8 +56,36 @@ public class ReimbursementFormController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String type) {
         
-        PageResult<ReimbursementForm> pageResult = formService.getByPage(pageNum, pageSize, employeeId, status, type);
+        // 获取当前登录用户
+        Subject subject = SecurityUtils.getSubject();
+        String username = (String) subject.getPrincipal();
+        Employee currentUser = employeeService.getByUsername(username);
+        
+        // 获取用户角色
+        List<String> roles = getCurrentUserRoles(subject);
+        
+        PageResult<ReimbursementForm> pageResult = formService.getByPageWithAuth(
+                pageNum, pageSize, employeeId, status, type, currentUser, roles);
         return Result.success(pageResult);
+    }
+    
+    /**
+     * 获取当前用户角色列表
+     */
+    private List<String> getCurrentUserRoles(Subject subject) {
+        List<String> roles = new ArrayList<>();
+        if (subject.hasRole("ADMIN")) {
+            roles.add("ADMIN");
+        }
+        if (subject.hasRole("FINANCE")) {
+            roles.add("FINANCE");
+        }
+        if (subject.hasRole("MANAGER")) {
+            roles.add("MANAGER");
+        }
+        // 默认所有用户都是员工
+        roles.add("EMPLOYEE");
+        return roles;
     }
 
     /**
@@ -87,8 +127,14 @@ public class ReimbursementFormController {
      * 更新报销单
      */
     @PutMapping
-    public Result<?> update(@RequestBody ReimbursementForm form) {
-        formService.update(form);
+    public Result<?> update(@RequestBody Map<String, Object> params) {
+        // 解析报销单和明细
+        ReimbursementForm form = parseForm(params);
+        // 从params中获取id设置到form
+        form.setId((Integer) params.get("id"));
+        List<ReimbursementDetail> details = parseDetails(params);
+
+        formService.updateWithDetails(form, details);
         return Result.success("更新成功");
     }
 
@@ -157,10 +203,13 @@ public class ReimbursementFormController {
     /**
      * 解析报销明细列表
      */
-    @SuppressWarnings("unchecked")
     private List<ReimbursementDetail> parseDetails(Map<String, Object> params) {
-        // 这里需要根据实际的JSON结构进行解析
-        // 简化处理,实际项目中可以使用Jackson或Fastjson进行转换
-        return (List<ReimbursementDetail>) params.get("details");
+        Object detailsObj = params.get("details");
+        if (detailsObj == null) {
+            return null;
+        }
+        // 使用Jackson将LinkedHashMap列表转换为ReimbursementDetail列表
+        return objectMapper.convertValue(detailsObj,
+                objectMapper.getTypeFactory().constructCollectionType(List.class, ReimbursementDetail.class));
     }
 }

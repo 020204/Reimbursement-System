@@ -1,12 +1,13 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import router from '@/router'
+import { useUserStore } from '@/stores/user'
 
 // 创建axios实例
 const request = axios.create({
   baseURL: '/api',
   timeout: 10000,
-  withCredentials: true // 携带cookie
+  withCredentials: true // 携带 cookie，与后端 session 一致
 })
 
 // 请求拦截器
@@ -29,9 +30,9 @@ request.interceptors.response.use(
     // 如果返回的状态码不是200,说明接口请求失败
     if (res.code !== 200) {
       ElMessage.error(res.message || '请求失败')
-      
-      // 401: 未登录
+      // 401: 未登录或 session 失效，清除本地状态
       if (res.code === 401) {
+        useUserStore().clearUserOnly()
         router.push('/login')
       }
       
@@ -54,6 +55,7 @@ request.interceptors.response.use(
       switch (status) {
         case 401:
           ElMessage.error('未登录或登录已过期,请重新登录')
+          useUserStore().clearUserOnly()
           router.push('/login')
           break
         case 403:

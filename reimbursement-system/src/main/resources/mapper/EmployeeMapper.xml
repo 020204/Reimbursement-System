@@ -93,4 +93,11 @@
         DELETE FROM employee WHERE id = #{id}
     </delete>
 
+    <!-- 根据部门查询员工ID列表 -->
+    <select id="selectIdsByDepartment" resultType="java.lang.Integer">
+        SELECT id
+        FROM employee
+        WHERE department = #{department}
+    </select>
+
 </mapper>

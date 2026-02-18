@@ -19,6 +19,11 @@ public class CustomRealm extends AuthorizingRealm {
     @Autowired
     private EmployeeService employeeService;
 
+    public CustomRealm() {
+        // 使用 MD5 匹配器：Token 为明文密码，Realm 返回 DB 中的 MD5，由匹配器做 MD5(明文) 与 DB 比对
+        setCredentialsMatcher(new Md5CredentialsMatcher());
+    }
+
     /**
      * 授权
      */
@@ -43,8 +48,6 @@ public class CustomRealm extends AuthorizingRealm {
             throws AuthenticationException {
         
         String username = (String) token.getPrincipal();
-        String password = new String((char[]) token.getCredentials());
-        
         Employee employee = employeeService.getByUsername(username);
         
         if (employee == null) {

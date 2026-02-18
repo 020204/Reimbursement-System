@@ -192,7 +192,7 @@ const viewDetail = (id) => {
 
 // 编辑
 const handleEdit = (id) => {
-  ElMessage.info('编辑功能开发中...')
+  router.push(`/reimbursement/edit/${id}`)
 }
 
 // 提交

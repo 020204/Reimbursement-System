@@ -18,10 +18,12 @@
 - ✅ 登录/登出
 - ✅ 基于角色的权限控制
 - ✅ 路由守卫
+- ✅ **Pinia状态持久化** (F5刷新不丢失登录)
 
 ### 2. 报销管理
-- ✅ 报销单列表(分页、搜索、筛选)
+- ✅ 报销单列表(分页、搜索、筛选、**数据权限控制**)
 - ✅ 创建报销单(动态添加明细)
+- ✅ **编辑报销单** (创建/编辑复用页面)
 - ✅ 报销单详情查看
 - ✅ 提交/删除报销单
 - ✅ 实时计算总金额
@@ -147,11 +149,12 @@ server: {
 - 提交/编辑/删除操作
 - 快速查看详情
 
-### 创建报销单 (/reimbursement/create)
+### 创建/编辑报销单 (/reimbursement/create 和 /reimbursement/edit/:id)
 - 基本信息录入
 - **动态添加报销明细**
 - **实时计算总金额**
 - 保存草稿/提交审批
+- **编辑模式加载原有数据**
 
 ### 报销单详情 (/reimbursement/detail/:id)
 - 完整信息展示
@@ -332,6 +335,7 @@ request.interceptors.response.use(
 
 - ✅ 路由守卫(登录验证)
 - ✅ 权限控制(角色验证)
+- ✅ **数据权限控制** (不同角色查看不同数据范围)
 - ✅ Token自动携带
 - ✅ 401/403统一处理
 - ✅ XSS防护(Element Plus内置)
@@ -369,7 +373,7 @@ request.interceptors.response.use(
 已在 vite.config.js 配置代理,开发环境无需担心
 
 ### 2. 登录后刷新丢失状态
-Pinia已配置持久化,不会丢失
+已使用 `pinia-plugin-persistedstate` 实现状态持久化，登录信息保存在 localStorage，刷新页面不会丢失
 
 ### 3. 生产环境API地址
 修改 vite.config.js 中的 target 地址

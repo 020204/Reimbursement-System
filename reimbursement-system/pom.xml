@@ -23,6 +23,7 @@
         <mybatis.version>2.2.2</mybatis.version>
         <pagehelper.version>1.4.6</pagehelper.version>
         <druid.version>1.2.16</druid.version>
+        <lombok.version>1.18.30</lombok.version>
     </properties>
 
     <dependencies>
@@ -73,10 +74,18 @@
             <version>1.11.0</version>
         </dependency>
 
-        <!-- Lombok -->
+        <!-- Shiro Redis Session -->
+        <dependency>
+            <groupId>org.crazycake</groupId>
+            <artifactId>shiro-redis-spring-boot-starter</artifactId>
+            <version>3.3.1</version>
+        </dependency>
+
+        <!-- Lombok (1.18.30+ for JDK 21 compatibility) -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
             <optional>true</optional>
         </dependency>
 

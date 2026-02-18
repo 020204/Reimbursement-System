@@ -6,6 +6,7 @@ import com.example.reimbursement.entity.ApprovalRecord;
 import com.example.reimbursement.entity.ReimbursementDetail;
 import com.example.reimbursement.entity.ReimbursementForm;
 import com.example.reimbursement.mapper.ApprovalRecordMapper;
+import com.example.reimbursement.mapper.EmployeeMapper;
 import com.example.reimbursement.mapper.ReimbursementDetailMapper;
 import com.example.reimbursement.mapper.ReimbursementFormMapper;
 import com.github.pagehelper.PageHelper;
@@ -39,6 +40,9 @@ public class ReimbursementFormService {
     @Autowired
     private ApprovalRecordMapper approvalRecordMapper;
 
+    @Autowired
+    private EmployeeMapper employeeMapper;
+
     /**
      * 根据ID查询报销单
      */
@@ -53,18 +57,60 @@ public class ReimbursementFormService {
         }
         // 查询明细
         List<ReimbursementDetail> details = detailMapper.selectByFormId(id);
-        // 查询审批记录
-        List<ApprovalRecord> approvalRecords = approvalRecordMapper.selectByFormId(id);
-        
-        // 这里可以将details和approvalRecords设置到form对象中,需要在实体类添加对应字段
+        form.setDetails(details);
+
         return form;
     }
 
     /**
-     * 分页查询报销单
+     * 分页查询报销单（带权限控制）
+     * @param pageNum 页码
+     * @param pageSize 每页大小
+     * @param employeeId 员工ID（普通员工只能看自己的）
+     * @param status 状态筛选
+     * @param type 类型筛选
+     * @param currentUser 当前登录用户
+     * @param userRoles 当前用户角色列表
      */
-    public PageResult<ReimbursementForm> getByPage(Integer pageNum, Integer pageSize, 
-                                                   Integer employeeId, String status, String type) {
+    public PageResult<ReimbursementForm> getByPageWithAuth(Integer pageNum, Integer pageSize,
+            Integer employeeId, String status, String type,
+            com.example.reimbursement.entity.Employee currentUser, java.util.List<String> userRoles) {
+        if (pageNum == null || pageNum < 1) {
+            pageNum = 1;
+        }
+        if (pageSize == null || pageSize < 1) {
+            pageSize = 10;
+        }
+
+        PageHelper.startPage(pageNum, pageSize);
+        List<ReimbursementForm> list;
+
+        // 权限控制逻辑
+        if (userRoles.contains("ADMIN") || userRoles.contains("FINANCE")) {
+            // 管理员/财务：查看全部
+            list = formMapper.selectByCondition(null, status, type);
+        } else if (userRoles.contains("MANAGER")) {
+            // 部门主管：查看本部门员工
+            List<Integer> deptEmployeeIds = employeeMapper.selectIdsByDepartment(currentUser.getDepartment());
+            if (deptEmployeeIds == null || deptEmployeeIds.isEmpty()) {
+                list = new java.util.ArrayList<>();
+            } else {
+                list = formMapper.selectByEmployeeIds(deptEmployeeIds, status, type);
+            }
+        } else {
+            // 普通员工：只能看自己
+            list = formMapper.selectByCondition(currentUser.getId(), status, type);
+        }
+
+        PageInfo<ReimbursementForm> pageInfo = new PageInfo<>(list);
+        return new PageResult<>(pageInfo.getTotal(), pageNum, pageSize, pageInfo.getList());
+    }
+
+    /**
+     * 分页查询报销单（兼容旧接口）
+     */
+    public PageResult<ReimbursementForm> getByPage(Integer pageNum, Integer pageSize,
+            Integer employeeId, String status, String type) {
         if (pageNum == null || pageNum < 1) {
             pageNum = 1;
         }
@@ -164,6 +210,56 @@ public class ReimbursementFormService {
         if (result <= 0) {
             throw new BusinessException("更新报销单失败");
         }
+        log.info("更新报销单成功, ID: {}", form.getId());
+    }
+
+    /**
+     * 更新报销单（包含明细）
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = "reimbursementForm", key = "#form.id")
+    public void updateWithDetails(ReimbursementForm form, List<ReimbursementDetail> details) {
+        if (form.getId() == null) {
+            throw new BusinessException("报销单ID不能为空");
+        }
+
+        ReimbursementForm existForm = formMapper.selectById(form.getId());
+        if (existForm == null) {
+            throw new BusinessException("报销单不存在");
+        }
+
+        // 只有草稿状态才能修改
+        if (!"DRAFT".equals(existForm.getStatus())) {
+            throw new BusinessException("只有草稿状态的报销单才能修改");
+        }
+
+        // 计算总金额
+        if (details != null && !details.isEmpty()) {
+            BigDecimal totalAmount = details.stream()
+                    .map(ReimbursementDetail::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            form.setAmount(totalAmount);
+        } else {
+            form.setAmount(BigDecimal.ZERO);
+        }
+
+        // 更新报销单
+        int result = formMapper.update(form);
+        if (result <= 0) {
+            throw new BusinessException("更新报销单失败");
+        }
+
+        // 删除原有明细
+        detailMapper.deleteByFormId(form.getId());
+
+        // 插入新明细
+        if (details != null && !details.isEmpty()) {
+            for (ReimbursementDetail detail : details) {
+                detail.setFormId(form.getId());
+            }
+            detailMapper.batchInsert(details);
+        }
+
         log.info("更新报销单成功, ID: {}", form.getId());
     }
 
@@ -299,7 +395,7 @@ public class ReimbursementFormService {
     private String generateFormNo() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
         String date = sdf.format(new Date());
-        String random = String.format("%04d", (int)(Math.random() * 10000));
+        String random = String.format("%04d", (int) (Math.random() * 10000));
         return "RB" + date + random;
     }
 }

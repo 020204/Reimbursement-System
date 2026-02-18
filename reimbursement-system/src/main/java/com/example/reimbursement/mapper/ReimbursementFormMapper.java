@@ -35,6 +35,13 @@ public interface ReimbursementFormMapper {
                                               @Param("type") String type);
 
     /**
+     * 根据员工ID列表查询报销单（用于部门主管查看本部门报销）
+     */
+    List<ReimbursementForm> selectByEmployeeIds(@Param("employeeIds") List<Integer> employeeIds,
+                                                @Param("status") String status,
+                                                @Param("type") String type);
+
+    /**
      * 插入报销单
      */
     int insert(ReimbursementForm form);
