@@ -36,11 +36,11 @@
       <!-- 表格 -->
       <el-table :data="tableData" v-loading="loading" border stripe v-if="userStore.isAdmin">
         <el-table-column type="index" label="序号" width="60" />
-        <el-table-column prop="name" label="部门名称" width="150" />
-        <el-table-column prop="code" label="部门编码" width="120" />
-        <el-table-column prop="description" label="部门描述" width="200" show-overflow-tooltip />
-        <el-table-column prop="createTime" label="创建时间" width="160" />
-        <el-table-column label="操作" width="180" fixed="right" v-if="userStore.isAdmin">
+        <el-table-column prop="name" label="部门名称" width="180" />
+        <el-table-column prop="code" label="部门编码" width="180" />
+        <el-table-column prop="description" label="部门描述" width="450" show-overflow-tooltip />
+        <el-table-column prop="createTime" label="创建时间" width="340" />
+        <el-table-column label="操作" width="300" fixed="right" v-if="userStore.isAdmin">
           <template #default="{ row }">
             <el-button type="primary" link @click="handleEdit(row)">
               <el-icon><Edit /></el-icon>

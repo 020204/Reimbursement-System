@@ -38,20 +38,20 @@
         <el-table-column type="index" label="序号" width="60" />
         <el-table-column prop="username" label="用户名" width="120" />
         <el-table-column prop="name" label="姓名" width="100" />
-        <el-table-column prop="email" label="邮箱" width="180" />
+        <el-table-column prop="email" label="邮箱" width="200" />
         <el-table-column prop="phone" label="手机号" width="120" />
-        <el-table-column prop="department" label="部门" width="120" />
-        <el-table-column prop="position" label="职位" width="120" />
-        <el-table-column prop="status" label="状态" width="80">
+        <el-table-column prop="department" label="部门" width="100" />
+        <el-table-column prop="position" label="职位" width="100" />
+        <el-table-column prop="status" label="状态" width="70">
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'">
               {{ row.status === 1 ? '在职' : '离职' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="hireDate" label="入职时间" width="120" />
-        <el-table-column prop="updateTime" label="修改时间" width="160" />
-        <el-table-column label="操作" width="200" fixed="right" v-if="canManageEmployee">
+        <el-table-column prop="hireDate" label="入职时间" width="240" />
+        <el-table-column prop="updateTime" label="修改时间" width="240" />
+        <el-table-column label="操作" width="160" fixed="right" v-if="canManageEmployee">
           <template #default="{ row }">
             <el-button type="primary" link @click="handleEdit(row)">
               <el-icon><Edit /></el-icon>
@@ -332,9 +332,12 @@ onMounted(() => {
 }
 
 .card-header {
-  font-weight: bold;
-  font-size: 16px;
+  display: flex;            /* 啟用 Flex 佈局 */
+  justify-content: space-between; /* 關鍵：讓子元素分居左右兩端 */
+  align-items: center;      /* 垂直居中 */
+  width: 100%;             /* 確保容器寬度為 100% */
 }
+
 
 .search-form {
   margin-bottom: 20px;
