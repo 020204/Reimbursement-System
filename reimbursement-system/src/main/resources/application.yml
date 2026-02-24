@@ -2,6 +2,9 @@ server:
   port: 8080
   servlet:
     context-path: /api
+  tomcat:
+    uri-encoding: UTF-8
+
 
 spring:
   application:
@@ -9,13 +12,12 @@ spring:
   main:
     allow-bean-definition-overriding: true
 
-  # 数据源配置
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/reimbursement_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
-    username: root
-    password: zz2332zz
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/reimbursement_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:zz2332zz}
     druid:
       initial-size: 5
       min-idle: 5
@@ -27,12 +29,11 @@ spring:
       test-while-idle: true
       test-on-borrow: false
       test-on-return: false
-      
-  # Redis配置
+
   redis:
-    host: localhost
-    port: 6379
-    password: zz2332zz
+    host: ${SPRING_REDIS_HOST:localhost}
+    port: ${SPRING_REDIS_PORT:6379}
+    password: ${SPRING_REDIS_PASSWORD:zz2332zz}
     database: 0
     timeout: 3000
     jedis:
@@ -42,7 +43,6 @@ spring:
         max-idle: 8
         min-idle: 0
 
-# MyBatis配置
 mybatis:
   mapper-locations: classpath:mapper/*.xml
   type-aliases-package: com.example.reimbursement.entity
@@ -50,14 +50,12 @@ mybatis:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
-# PageHelper配置
 pagehelper:
   helper-dialect: mysql
   reasonable: true
   support-methods-arguments: true
   params: count=countSql
 
-# Shiro配置
 shiro:
   enabled: true
   web:
@@ -66,21 +64,32 @@ shiro:
   success-url: /index
   unauthorized-url: /unauthorized
 
-# Shiro Redis Session配置
 shiro-redis:
   enabled: true
   redis-manager:
-    host: localhost:6379
-    password: zz2332zz
+    host: ${SHIRO_REDIS_HOST:localhost:6379}
+    password: ${SHIRO_REDIS_PASSWORD:zz2332zz}
     database: 0
     timeout: 3000
   session-dao:
-    expire: 86400  # Session过期时间(秒),24小时
+    expire: 86400
 
-# 日志配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
+
 logging:
   level:
     com.example.reimbursement: debug
     org.springframework: info
   pattern:
-    console: '%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n'
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    charset:
+      pattern: UTF-8

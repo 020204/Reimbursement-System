@@ -1,0 +1,53 @@
+# ============================================
+# Development Overrides for Docker Compose
+# ============================================
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+# Features:
+#   - Hot reload for backend (Spring Boot DevTools)
+#   - Hot reload for frontend (Vite dev server)
+#   - Exposed ports for debugging
+# ============================================
+
+services:
+  mysql:
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+
+  redis:
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+
+  backend:
+    build:
+      context: ./reimbursement-system
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./reimbursement-system/src:/app/src:delegated
+      - ./reimbursement-system/pom.xml:/app/pom.xml:delegated
+      - maven-cache:/root/.m2
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      JAVA_OPTS: -Xms128m -Xmx256m -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+      - "5005:5005"
+
+  frontend:
+    build:
+      context: ./reimbursement-frontend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./reimbursement-frontend/src:/app/src:delegated
+      - ./reimbursement-frontend/public:/app/public:delegated
+      - ./reimbursement-frontend/index.html:/app/index.html:delegated
+      - ./reimbursement-frontend/vite.config.js:/app/vite.config.js:delegated
+      - ./reimbursement-frontend/package.json:/app/package.json:delegated
+      - npm-cache:/app/node_modules
+    environment:
+      VITE_API_BASE_URL: http://localhost:8080/api
+    ports:
+      - "3000:3000"
+
+volumes:
+  maven-cache:
+  npm-cache:

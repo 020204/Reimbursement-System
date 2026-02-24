@@ -124,6 +124,112 @@ npm run dev
 
 启动成功后访问: http://localhost:3000
 
+---
+
+## 🐳 Docker 一键部署 (推荐)
+项目已完整配置 Docker 容器化方案，支持一键启动整个技术栈（MySQL, Redis, Backend, Frontend）。
+
+### 1. 快速部署
+
+在项目根目录下执行：
+
+```bash
+# 生产环境部署
+docker-compose up -d
+
+# 开发环境部署（支持热重载）
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+```
+
+### 2. 环境配置
+
+项目使用 `.env` 文件管理配置，首次部署请检查配置：
+
+```bash
+# .env 文件内容示例
+MYSQL_ROOT_PASSWORD=root123456
+MYSQL_DATABASE=reimbursement_db
+REDIS_PASSWORD=redis123456
+SPRING_PROFILES_ACTIVE=docker
+```
+
+**⚠️ 生产环境请修改默认密码！**
+
+### 3. 访问地址
+
+| 服务 | 地址 | 说明 |
+|------|------|------|
+| 前端界面 | http://localhost | 默认80端口 |
+| 后端接口 | http://localhost:8080/api | RESTful API |
+| 健康检查 | http://localhost:8080/api/actuator/health | 服务状态 |
+
+### 4. 服务架构
+
+| 服务 | 镜像 | 健康检查 | 说明 |
+|------|------|----------|------|
+| mysql | mysql:8.0 | ✅ mysqladmin ping | 数据库 |
+| redis | redis:7-alpine | ✅ redis-cli ping | 缓存(带密码) |
+| backend | Spring Boot | ✅ /actuator/health | 后端API |
+| frontend | Vue 3 + Nginx | - | 前端 |
+
+### 5. 常用命令
+
+```bash
+# 启动所有服务
+docker-compose up -d
+
+# 查看日志
+docker-compose logs -f
+
+# 查看特定服务日志
+docker-compose logs -f backend
+
+# 停止所有服务
+docker-compose down
+
+# 重新构建镜像
+docker-compose build --no-cache
+
+# 进入容器
+docker exec -it reimbursement-backend /bin/sh
+```
+
+### 6. 开发模式
+
+开发模式支持代码热重载：
+
+```bash
+# 启动开发环境
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+```
+
+开发模式特性：
+- 后端：Spring Boot DevTools 热重载，JDWP 调试端口 5005
+- 前端：Vite 热重载，访问 http://localhost:3000
+- 源码挂载：修改代码自动生效
+
+### 7. 配置说明
+
+- 数据库自动初始化：通过挂载 `reimbursement-system/src/main/resources/init.sql` 实现
+- 环境变量：所有配置通过 `.env` 文件管理
+- 服务依赖：自动等待依赖服务健康后启动
+- 持久化：MySQL 和 Redis 数据使用 Docker Volume 持久化
+
+---
+
+## 🖥️ 1Panel 服务器部署指南
+
+如果您使用的是 **1Panel** 面板进行服务器管理，我们提供了专门的部署文档：
+
+👉 **[1Panel 部署详细文档](file:///home/ckc/IdeaProjects/Reimbursement-System/1PANEL_DEPLOYMENT.md)**
+
+包含：
+- 如何在 1Panel 中导入配置
+- 容器化部署步骤
+- 数据库与网络设置
+
+---
+
 ### 第三步: 登录测试
 
 使用以下测试账号登录:

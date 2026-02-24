@@ -1,41 +1,72 @@
-version: '3.8'
+# ============================================
+# Reimbursement System - Docker Compose
+# ============================================
+# Usage:
+#   Production: docker-compose up -d
+#   Development: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+# ============================================
 
 services:
-  # MySQL数据库
+  # ==========================================
+  # MySQL Database
+  # ==========================================
   mysql:
     image: mysql:8.0
     container_name: reimbursement-mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root123456
-      MYSQL_DATABASE: reimbursement_db
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-reimbursement_db}
       TZ: Asia/Shanghai
     ports:
-      - "3306:3306"
+      - "${MYSQL_PORT:-3306}:3306"
     volumes:
       - mysql-data:/var/lib/mysql
-      - ./reimbursement-system/src/main/resources/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./reimbursement-system/src/main/resources/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --default-authentication-plugin=mysql_native_password
+      - --max_connections=500
+      - --innodb_buffer_pool_size=256M
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root123456}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     networks:
       - reimbursement-network
 
-  # Redis缓存
+  # ==========================================
+  # Redis Cache
+  # ==========================================
   redis:
     image: redis:7-alpine
     container_name: reimbursement-redis
     restart: always
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis-data:/data
-    command: redis-server --appendonly yes
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD:-redis123456}
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis123456}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - reimbursement-network
 
-  # 后端服务
+  # ==========================================
+  # Backend Service (Spring Boot)
+  # ==========================================
   backend:
     build:
       context: ./reimbursement-system
@@ -43,25 +74,44 @@ services:
     container_name: reimbursement-backend
     restart: always
     ports:
-      - "8080:8080"
+      - "${BACKEND_PORT:-8080}:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/reimbursement_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
+      # Spring Profile
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      
+      # Database Configuration
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-reimbursement_db}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root123456
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+      
+      # Redis Configuration
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
+      SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD:-redis123456}
+      
+      # Shiro Redis Session
+      SHIRO_REDIS_HOST: redis:6379
+      SHIRO_REDIS_PASSWORD: ${REDIS_PASSWORD:-redis123456}
+      
+      # JVM Options
+      JAVA_OPTS: -Xms256m -Xmx512m -XX:+UseG1GC
     depends_on:
-      - mysql
-      - redis
-    networks:
-      - reimbursement-network
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/api/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 60s
+    networks:
+      - reimbursement-network
 
-  # 前端服务
+  # ==========================================
+  # Frontend Service (Vue 3 + Nginx)
+  # ==========================================
   frontend:
     build:
       context: ./reimbursement-frontend
@@ -69,16 +119,26 @@ services:
     container_name: reimbursement-frontend
     restart: always
     ports:
-      - "80:80"
+      - "${FRONTEND_PORT:-80}:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - reimbursement-network
 
+# ==========================================
+# Volumes
+# ==========================================
 volumes:
   mysql-data:
+    name: reimbursement-mysql-data
   redis-data:
+    name: reimbursement-redis-data
 
+# ==========================================
+# Networks
+# ==========================================
 networks:
   reimbursement-network:
+    name: reimbursement-network
     driver: bridge
